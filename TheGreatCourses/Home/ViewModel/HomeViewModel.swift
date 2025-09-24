@@ -36,20 +36,26 @@ class HomeViewModel: ObservableObject {
         }
         
         do {
-            guard let result = try await service.fetch(CourseResponseDTO.self, from: urlStr) else {
-                return
-            }
+            let result = try await service.fetch(CourseResponseDTO.self, from: urlStr)
             
-            for dto in result.products {
-                try CourseItem.upsert(from: dto, in: context)
-            }
-            
-            try context.save()
-            
-            do {
-                try await loadFromStorage(context)
-            } catch {
-                print("SwiftData fetch failed:", error)
+            switch result {
+            case .success(let courseResponse):
+                guard let courseResponse else { return }
+                for dto in courseResponse.products {
+                    try CourseItem.upsert(from: dto, in: context)
+                }
+                
+                try context.save()
+                
+                do {
+                    try await loadFromStorage(context)
+                } catch {
+                    print("SwiftData fetch failed:", error)
+                }
+                
+            case .failure(let error):
+                print("Error: \(error.localizedDescription)")
+                courseItems = []
             }
         } catch {
             print("Error fetching characters: \(error.localizedDescription)")

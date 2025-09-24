@@ -19,7 +19,14 @@ class CourseDetailViewModel: ObservableObject {
     func fetchCourseDetail(_ urlStr: String) async {
         do {
             let result = try await service.fetch(CourseDetail.self, from: urlStr)
-            self.courseDetail = result
+            
+            switch result {
+            case .success(let value):
+                self.courseDetail = value
+            case .failure(let error):
+                print("Error: \(error.localizedDescription)")
+                self.courseDetail = nil
+            }
         } catch {
             print("Error fetching characters: \(error.localizedDescription)")
         }
